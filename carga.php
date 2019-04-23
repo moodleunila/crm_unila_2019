@@ -50,6 +50,8 @@
 
 
 
+
+
   //-----------------------------------------------------------
   // Obtenemos Conexion a fuente de datos externa
   //-----------------------------------------------------------
@@ -72,25 +74,29 @@
       SELECT DISTINCT
         mayusculaMinuscula(SUBSTRING_INDEX(SUBSTRING_INDEX(a.name, ' ', 1), ' ', -1)) AS nombre,
         mayusculaMinuscula (TRIM( SUBSTR(a.name, LOCATE(' ', a.name)) )) AS apellidos,
-        email AS correo, b.nombre AS nivel, origin AS origen,
+        LOWER(email) AS correo,
+        b.nombre AS nivel,
+        IF(INSTR(origin,'google'),'Google',IF(INSTR(origin,'facebook'),'Facebook','Organica')) AS origen,
         TRIM(REPLACE(c.nombre, 'Campus','')) AS campus,
         phone AS telefono, cellphone AS celular, d.nombre AS carrera, date AS fecha, hour AS hora
       FROM registry a
         INNER JOIN nivel_nivel b        ON a.nivel   = b.id
         INNER JOIN campus_campus c      ON a.campus  = c.id
         INNER JOIN programa_programa d  ON a.program = d.id
-      WHERE  (a.date BETWEEN '{$fecha[0]}' AND DATE ) AND (a.hour BETWEEN '{$fecha[1]}' AND DATE_FORMAT(NOW( ), "%H:%i:%S" ) )
+      WHERE  (a.date BETWEEN ? AND DATE ) AND (a.hour BETWEEN ? AND DATE_FORMAT(NOW(), "%H:%i:%S" ) )
       ORDER By a.date ASC, a.hour ASC;
 EOT;
 
 
-  $leads = $db->query($SQL)->fetchAll();
+  $leads = $db->query($SQL, $fecha[0], $fecha[1])->fetchAll();
 
   $type  = 'Leads';
 
   foreach ($leads as $lead) {
+    if (empty($lead['apellidos'])){
+      $lead['apellidos'] = '(Preguntar apellidos)';
+    }
     $element = array(
-      'salutationtype'   =>'Sr',
       'firstname'        => trim($lead['nombre']),
       'lastname'         => trim($lead['apellidos']),
       'email'            => trim($lead['correo']),
@@ -99,12 +105,13 @@ EOT;
       'leadsource'       => trim($lead['origen']),
       'cf_864'           => trim($lead['carrera']),
       'cf_858'           => trim($lead['campus']),
-      'assigned_user_id' => '19x5',     //assign to user marketing, groups would have the prefix 20
+      'assigned_user_id' => '20x8',     //assign to user marketing, groups would have the prefix 20
     );
-    /*$result = $wsC->operation("create",
+    $result = $wsC->operation("create",
                               array("elementType" => $type,
                                     "element"     => json_encode($element)),
-                              "POST");*/
+                              "POST");
+    //print_r($element);
   }
 
   if ($wsC->errorMsg) {
@@ -120,3 +127,14 @@ EOT;
 
   $log->info('Guardamos fecha de ejecucion: '. $DateNow);
   $db->close();
+
+  function SEO($fuente){
+    if (strpos($fuente, "google")){
+        return "Google";
+    }elseif(strpos($fuente, "facebook")){
+        return "Facebook";
+    }else{
+      return "Organico";
+    }
+
+  }
