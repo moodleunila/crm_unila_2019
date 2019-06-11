@@ -13,7 +13,7 @@
   $dbuser    = 'unila';
   $dbpass    = 'unila2019.';
   $dbname    = 'unila';
-  $url       = 'http://132.248.122.211/vtigercrm/webservice.php';
+  $url       = 'https://linea.unila.edu.mx/vtigercrm/webservice.php';
   $username  = "admin";
   $accessKey = "l1XsmX87trP4kHy9"; // CRM user's access key (from My preferences menu)
   $time      = date('d-m-Y');
@@ -105,6 +105,7 @@ EOT;
       'leadsource'       => trim($lead['origen']),
       'cf_864'           => trim($lead['carrera']),
       'cf_858'           => trim($lead['campus']),
+      'cf_882'           => 'ABC',
       'assigned_user_id' => '20x8',     //assign to user marketing, groups would have the prefix 20
     );
     $result = $wsC->operation("create",
